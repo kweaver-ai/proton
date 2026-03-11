@@ -1,0 +1,9 @@
+# docker build --no-cache -t acr.aishu.cn/ict/proton-rds-go-build-amd64:1.0.1 -f Dockerfile.build .
+FROM golang:1.25
+
+RUN go env -w GOPROXY="https://goproxy.cn,direct"; \
+    go get -u github.com/jstemmer/go-junit-report; \
+    go get -u github.com/axw/gocov/...; \
+    go get -u github.com/AlekSi/gocov-xml; \
+    go get -u github.com/golang/mock/gomock; \
+    go get -u github.com/golang/mock/mockgen;

@@ -1,0 +1,61 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mysql-restore
+  namespace: default
+spec:
+  template:
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: localhost.localdomain
+      containers:
+      - name: mysql
+        image: acr.aishu.cn/proton/rds-mgmt:1.6.0-develop
+        imagePullPolicy: IfNotPresent
+        command:
+          - "/bin/sh"
+          - "-ecx"
+          - |
+            mysqlDatadir="/var/lib/rds-mariadb/mysql"
+            backupDatadir="/var/lib/rds-mgmt/backup"
+            tmpDatadir="/var/lib/rds-mgmt/tmp"
+
+            rm -rf $mysqlDatadir
+            mkdir $mysqlDatadir
+            rm -rf $tmpDatadir
+            mkdir $tmpDatadir
+            [ ! -d "$backupDatadir" ] && echo "BackupNotFound" && exit 0
+
+            package=`ls -tr $backupDatadir | grep 'zstd$' | tail -n 1`
+            [ -z "$package" ] && echo "BackupNotFound" && exit 0
+            zstd -d -c $backupDatadir/$package | mbstream -x -C $tmpDatadir
+            mariabackup --prepare --target-dir=$tmpDatadir
+            mariabackup --move-back --target-dir=$tmpDatadir --datadir=$mysqlDatadir
+
+            if [ -f "$mysqlDatadir/xtrabackup_galera_info" ]; then
+               id=`awk -F ':' '{print $1}' $mysqlDatadir/xtrabackup_galera_info`
+               seq=`awk -F ':' '{print $2}' $mysqlDatadir/xtrabackup_galera_info`
+            cat >> $mysqlDatadir/grastate.dat << EOF
+            # GALERA saved state
+            version: 2.1
+            uuid:    $id
+            seqno:   $seq
+            safe_to_bootstrap: 0
+            EOF
+            fi
+            rm -rf $tmpDatadir
+
+            echo "**********SUCCESS**********"
+        volumeMounts:
+        - name: mgmt-datadir
+          mountPath: /var/lib/rds-mgmt
+        - name: mariadb-datadir
+          mountPath: /var/lib/rds-mariadb
+      volumes:
+      - name: mgmt-datadir
+        hostPath:
+          path: /data/mariadb-0
+      - name: mariadb-datadir
+        hostPath:
+          path: /data/mariadb-0
+      restartPolicy: OnFailure

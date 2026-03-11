@@ -1,0 +1,60 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  name: ICT-Test
+  demands:
+    - agent.name -equals ICT_PyTest_x86_agent
+
+steps:
+- checkout: self
+
+- task: CmdLine@2
+  displayName: 执行rds测试用例
+  continueOnError: true
+  inputs:
+    script: |
+      set -xe
+      echo '$(system.defaultworkingdirectory)'
+      cd $(system.defaultworkingdirectory)
+      cd test
+      pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+      python3 -m pytest --host 10.4.14.190 --password driver --CRDVersion 1.1.0-master --alluredir ../allure-results --clean-alluredir --junit-xml='$(Build.SourcesDirectory)'/rds.xml
+
+- task: CmdLine@2
+  displayName: 生成测试报告
+  inputs:
+    script: |
+      set -xe
+      echo '$(System.DefaultWorkingDirectory)'
+      allure generate allure-results/ --clean
+- task: PublishTestResults@2
+  displayName: 'Publish Test XML Report'
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '*.xml'
+    mergeTestResults: true
+
+- task: CmdLine@2
+  displayName: 更新构建标识号
+  inputs:
+    script: |
+      echo '##vso[build.updatebuildnumber]$(System.TeamProject)-$(Build.Repository.Name)-$(Build.SourceBranchName)-$(Build.BuildNumber)-$(Build.BuildId)'
+
+- task: FtpUpload@2
+  displayName: 上传测试报告
+  inputs:
+    credentialsOption: 'serviceEndpoint'
+    serverEndpoint: 'TestReportFTP'
+    rootDirectory: 'allure-report/'
+    filePatterns: '**'
+    remoteDirectory: '/$(Build.BuildNumber)/'
+    clean: false
+    cleanContents: false
+    preservePaths: true
+    trustSSL: false

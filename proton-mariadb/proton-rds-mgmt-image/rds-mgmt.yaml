@@ -1,0 +1,14 @@
+lang: zh_CN
+port: 8888
+rdsHost: 127.0.0.1
+rdsPort: 3306
+logLevel: error
+rootUserName: root
+useEncryption: false
+oAuthON: false
+hydraURL:
+mysqlDatadir: /var/lib/rds/mysql
+backupDatadir: /var/lib/rds/backup
+agentPort: 8889
+member:
+- 127.0.0.1

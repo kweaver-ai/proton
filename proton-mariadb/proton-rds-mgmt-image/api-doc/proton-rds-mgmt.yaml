@@ -1,0 +1,1426 @@
+---
+openapi: 3.0.2
+info:
+  title: proton-rds-mgmt
+  version: 1.9.0
+  description: Proton RDS Management API
+servers:
+- url: "http://{host}:{port}"
+  description: api server url
+  variables:
+    host:
+      default: 127.0.0.1
+      description: api服务所在host。
+    port:
+      default: "8888"
+      description: api服务监听的端口
+paths:
+  /api/proton-rds-mgmt/v2/dbs:
+    summary: 数据库查询
+    description: 用于获取数据库列表
+    get:
+      tags:
+      - DataBase
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DBItem'
+              examples:
+                DBItems:
+                  value:
+                  - db_name: test1
+                    charset: utf8mb4
+                    collate: utf8mb4_general_ci
+                  - db_name: test2
+                    charset: utf8mb4
+                    collate: utf8mb4_general_ci
+          description: 查询成功
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                未授权:
+                  value:
+                    code: 401020000
+                    message: Unauthorized
+                    cause: Failed to verify Token
+          description: 未授权
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                禁止执行:
+                  value:
+                    code: 403020000
+                    message: 禁止执行
+                    cause: 无相关权限
+          description: 请求禁止执行
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                内部异常:
+                  value:
+                    code: 500020000
+                    message: 内部错误
+                    cause: xxx Exception...
+          description: 内部错误
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 400020000
+                    message: 参数错误
+                    cause: 请求参数不合法
+          description: 参数错误
+      security:
+      - OAuth2.0: []
+      summary: 查询
+      description: 获取所有的db
+    parameters:
+    - examples:
+        root:fakepassword:
+          value: cm9vdDpmYWtlcGFzc3dvcmQ=
+      name: admin-key
+      description: 对管理员用户名+密码字符串(用户名:密码)进行base64编码。 如已配置加密，则对原始密码加密后(用户名:加密密码)再进行base64编码
+      schema:
+        type: string
+      in: header
+      required: true
+  /api/proton-rds-mgmt/v2/users:
+    summary: 用户账户查询
+    description: 用于获取用户账户列表
+    get:
+      tags:
+      - UserAccount
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserItem'
+              examples:
+                users:
+                  value:
+                  - privileges:
+                    - privilege_type: ReadOnly
+                      db_name: some text
+                    - privilege_type: ReadWrite
+                      db_name: some text
+                    username: some text
+                    ssl_type: Any
+                  - privileges:
+                    - privilege_type: ReadOnly
+                      db_name: some text
+                    - privilege_type: ReadWrite
+                      db_name: some text
+                    username: some text
+                    ssl_type: Any
+          description: 查询成功
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                未授权:
+                  value:
+                    code: 401020000
+                    message: Unauthorized
+                    cause: Failed to verify Token
+          description: 未授权
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                禁止执行:
+                  value:
+                    code: 403020000
+                    message: 禁止执行
+                    cause: 无相关权限
+          description: 请求禁止执行
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                内部异常:
+                  value:
+                    code: 500020000
+                    message: 内部错误
+                    cause: xxx Exception...
+          description: 内部错误
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 400020000
+                    message: 参数错误
+                    cause: 请求参数不合法
+          description: 参数错误
+      security:
+      - OAuth2.0: []
+      summary: 查询
+      description: 获取所有的user
+    parameters:
+    - examples:
+        root:fakepassword:
+          value: cm9vdDpmYWtlcGFzc3dvcmQ=
+      name: admin-key
+      description: 对管理员用户名+密码字符串(用户名:密码)进行base64编码。 如已配置加密，则对原始密码加密后(用户名:加密密码)再进行base64编码
+      schema:
+        type: string
+      in: header
+      required: true
+  /api/proton-rds-mgmt/v2/dbs/{db_name}:
+    summary: 数据库管理
+    description: 用于数据库的创建和删除
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DBInfo'
+            examples:
+              DBInfo:
+                value:
+                  charset: utf8mb4
+                  collate: utf8mb4_general_ci
+        required: true
+      tags:
+      - DataBase
+      responses:
+        "201":
+          description: 创建成功
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                参数错误:
+                  value:
+                    code: 400020000
+                    message: 参数错误
+                    cause: 请求参数不合法
+          description: 非法请求
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                未授权:
+                  value:
+                    code: 401020000
+                    message: Unauthorized
+                    cause: Failed to verify Token
+          description: 未授权
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                禁止执行:
+                  value:
+                    code: 403020000
+                    message: 禁止执行
+                    cause: 数据库已存在无法重复创建
+          description: 请求禁止执行
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                内部异常:
+                  value:
+                    code: 500020000
+                    message: 内部错误
+                    cause: xxx Exception...
+          description: 内部错误
+      summary: 创建
+      description: 创建数据库
+    delete:
+      tags:
+      - DataBase
+      responses:
+        "204":
+          description: 删除成功，无返回内容
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                未授权:
+                  value:
+                    code: 401020000
+                    message: Unauthorized
+                    cause: Failed to verify Token
+          description: 未授权
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                禁止执行:
+                  value:
+                    code: 403020000
+                    message: 禁止执行
+                    cause: 系统数据库不允许删除
+          description: 该请求禁止执行
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                资源不存在:
+                  value:
+                    code: 404020000
+                    message: 资源不存在
+                    cause: 待删除的数据库不存在
+          description: 删除的资源不存在
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                内部错误:
+                  value:
+                    code: 500020000
+                    message: 内部错误
+                    cause: xxx Exception...
+          description: 内部错误
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 400020000
+                    message: 参数错误
+                    cause: 请求参数不合法
+          description: 参数错误
+      security:
+      - OAuth2.0: []
+      summary: 删除
+      description: 删除数据库
+    parameters:
+    - examples:
+        root:fakepassword:
+          value: cm9vdDpmYWtlcGFzc3dvcmQ=
+      name: admin-key
+      description: 对管理员用户名+密码字符串(用户名:密码)进行base64编码。 如已配置加密，则对原始密码加密后(用户名:加密密码)再进行base64编码
+      schema:
+        type: string
+      in: header
+      required: true
+    - examples:
+        test1库:
+          value: test1
+      name: db_name
+      description: "数据库名, 由小写字母、数字、下划线（_）组成，以字母开头，字母或数字结尾，最多64个字符"
+      schema:
+        type: string
+      in: path
+      required: true
+  /api/proton-rds-mgmt/v2/users/{username}:
+    summary: 数据库账户管理
+    description: 用于创建、删除、授权账户
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordInfo'
+            examples:
+              密码fakepassword:
+                value:
+                  password: ZWlzb28uY29tMTIzCg==
+        required: true
+      tags:
+      - UserAccount
+      responses:
+        "200":
+          description: 创建或修改成功
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                请求错误:
+                  value:
+                    code: 400020000
+                    message: 参数错误
+                    cause: 请求参数不合法
+          description: 非法请求
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                未授权:
+                  value:
+                    code: 401020000
+                    message: Unauthorized
+                    cause: Failed to verify Token
+          description: 未授权
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                禁止执行:
+                  value:
+                    code: 403020000
+                    message: 禁止执行
+                    cause: 待创建的账户已存在
+          description: 请求禁止执行
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                内部错误:
+                  value:
+                    code: 500020000
+                    message: 内部错误
+                    cause: xxx Exception...
+          description: 内部错误
+      security:
+      - OAuth2.0: []
+      summary: 创建
+      description: 创建用户
+    delete:
+      tags:
+      - UserAccount
+      parameters:
+      - examples:
+          删除账户anyshare:
+            value: anyshare
+        name: username
+        description: 用户名
+        schema:
+          type: string
+        in: path
+        required: true
+      responses:
+        "204":
+          description: 删除成功
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                未授权:
+                  value:
+                    code: 401020000
+                    message: Unauthorized
+                    cause: Failed to verify Token
+          description: 未授权
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                禁止执行:
+                  value:
+                    code: 403020000
+                    message: 禁止执行
+                    cause: 请求禁止执行
+          description: 非法请求
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                资源不存在:
+                  value:
+                    code: 404020000
+                    message: 资源不存在
+                    cause: 用户不存在
+          description: 未找到给定资源
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                内部错误:
+                  value:
+                    code: 500020000
+                    message: 内部错误
+                    cause: xxx Exception...
+          description: 内部错误
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 400020000
+                    message: 参数错误
+                    cause: 请求参数不合法
+          description: 参数错误
+      security:
+      - OAuth2.0: []
+      summary: 删除
+      description: 删除用户
+    parameters:
+    - examples:
+        root:fakepassword:
+          value: cm9vdDpmYWtlcGFzc3dvcmQ=
+      name: admin-key
+      description: 对管理员用户名+密码字符串(用户名:密码)进行base64编码。 如已配置加密，则对原始密码加密后(用户名:加密密码)再进行base64编码
+      schema:
+        type: string
+      in: header
+      required: true
+    - examples:
+        UserName:
+          value: test1
+      name: username
+      description: 用户名，由大写字母、小写字母、数字、下划线（_）组成，以字母开头，以字母或数字结尾，最多32个字符
+      schema:
+        type: string
+      in: path
+      required: true
+  /api/proton-rds-mgmt/v2/users/{username}/privileges:
+    summary: 权限设置
+    description: 用于创建、删除、授权账户权限
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/PrivItem'
+            examples:
+              权限设置:
+                value:
+                - privilege_type: ReadWrite
+                  db_name: some text
+                - privilege_type: DMLOnly
+                  db_name: some text
+        required: true
+      tags:
+      - UserAccount
+      parameters:
+      - examples:
+          UserName:
+            value: test1
+        name: username
+        description: 用户名
+        schema:
+          type: string
+        in: path
+        required: true
+      responses:
+        "204":
+          description: 修改成功
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                请求错误:
+                  value:
+                    code: 400020000
+                    message: 参数错误
+                    cause: 请求参数不合法
+          description: 非法请求
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                未授权:
+                  value:
+                    code: 401020000
+                    message: Unauthorized
+                    cause: Failed to verify Token
+          description: 未授权
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                禁止执行:
+                  value:
+                    code: 403020000
+                    message: 禁止执行
+                    cause: 待创建的账户已存在
+          description: 请求禁止执行
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                内部错误:
+                  value:
+                    code: 500020000
+                    message: 内部错误
+                    cause: xxx Exception...
+          description: 内部错误
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 404020000
+                    message: 资源不存在
+                    cause: 用户不存在
+          description: 资源不存在
+      security:
+      - OAuth2.0: []
+      summary: 权限设置
+      description: 用于创建、删除、授权账户权限
+    patch:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ExtendPrivItem'
+            examples:
+              权限设置:
+                value:
+                - privilege_type: DMLOnly
+                  db_name: some text
+                - privilege_type: None
+                  db_name: some text
+        required: true
+      tags:
+      - UserAccount
+      parameters:
+      - examples:
+          UserName:
+            value: test1
+        name: username
+        description: 用户名
+        schema:
+          type: string
+        in: path
+        required: true
+      responses:
+        "204":
+          description: 设置成功
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                参数错误:
+                  value:
+                    code: 400020000
+                    message: 参数错误
+                    cause: 请求参数不合法
+          description: 非法请求
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                未授权:
+                  value:
+                    code: 401020000
+                    message: Unauthorized
+                    cause: some text
+          description: 未授权
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                禁止操作:
+                  value:
+                    code: 403020000
+                    message: 禁止执行
+                    cause: some text
+          description: 禁止操作
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                内部错误:
+                  value:
+                    code: 500020000
+                    message: 内部错误
+                    cause: some text
+          description: 内部错误
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 404020000
+                    message: 资源不存在
+                    cause: 用户不存在
+          description: 资源不存在
+      security:
+      - OAuth2.0: []
+      summary: 权限设置
+      description: 用于单个或多个库权限设置
+    parameters:
+    - examples:
+        UserName:
+          value: test1
+      name: username
+      description: 用户名，由大写字母、小写字母、数字、下划线（_）组成，以字母开头，以字母或数字结尾，最多32个字符
+      schema:
+        type: string
+      in: path
+      required: true
+    - examples:
+        root:fakepassword:
+          value: cm9vdDpmYWtlcGFzc3dvcmQ=
+      name: admin-key
+      description: 对管理员用户名+密码字符串(用户名:密码)进行base64编码。 如已配置加密，则对原始密码加密后(用户名:加密密码)再进行base64编码
+      schema:
+        type: string
+      in: header
+      required: true
+  /api/proton-rds-mgmt/v2/backups/{backup_id}:
+    get:
+      tags:
+      - Backup
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackupInfo'
+              examples:
+                e1:
+                  value:
+                    id: 1621245880-xxx
+                    status: success
+                    create_time: 2019-04-25T02:21:21.328982+00:00
+                    storage_node: mariadb-proton-rds-mariadb-0
+                    package_name: 1621245880-xxx.zstd
+          description: 获取成功
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e:
+                  value:
+                    code: 401020000
+                    message: Unauthorized
+                    cause: Failed to verify Token
+          description: oauth鉴权失败
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 404020000
+                    message: 资源不存在
+                    cause: 备份包不存在
+          description: 不存在备份包
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 500020000
+                    message: 内部错误
+                    cause: xxx Exception...
+          description: 内部异常
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 400020000
+                    message: 参数错误
+                    cause: 请求参数不合法
+          description: 参数错误
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 403020000
+                    message: 禁止执行
+                    cause: 无相关权限
+          description: 逻辑错误，如权限不足
+      security:
+      - OAuth2.0: []
+      summary: 获取备份包信息
+    delete:
+      tags:
+      - Backup
+      responses:
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 401020000
+                    message: Unauthorized
+                    cause: Failed to verify Token
+          description: oauth鉴权失败
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 404020000
+                    message: 资源不存在
+                    cause: 备份包不存在
+          description: 备份包不存在
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 400020000
+                    message: 参数错误
+                    cause: 请求参数不合法
+          description: 参数错误
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 500020000
+                    message: 内部错误
+                    cause: xxx Exception...
+          description: 内部异常
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 403020000
+                    message: 禁止执行
+                    cause: 无相关权限
+          description: 逻辑错误，如权限不足
+        "204":
+          description: 删除成功
+      security:
+      - OAuth2.0: []
+      summary: 删除备份包
+    parameters:
+    - examples:
+        e1:
+          value: 1234_xxxx
+      name: backup_id
+      schema:
+        type: string
+      in: path
+      required: true
+    - examples:
+        root:fakepassword:
+          value: cm9vdDpmYWtlcGFzc3dvcmQ=
+      name: admin-key
+      description: 对管理员用户名+密码字符串(用户名:密码)进行base64编码。 如已配置加密，则对原始密码加密后(用户名:加密密码)再进行base64编码
+      schema:
+        type: string
+      in: header
+      required: true
+  /api/proton-rds-mgmt/v2/backups:
+    get:
+      tags:
+      - Backup
+      parameters:
+      - name: limit
+        description: 返回结果数
+        schema:
+          type: integer
+        in: query
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BackupInfo'
+              examples:
+                e1:
+                  value:
+                  - id: 1621245880-xxx
+                    status: success
+                    create_time: 2019-04-25T02:21:21.328982+00:00
+                    storage_node: mariadb-proton-rds-mariadb-0
+                    package_name: 1621245880-xxx.zstd
+                  - id: 1621245880-yyy
+                    status: running
+                    create_time: 2019-04-25T02:21:21.328982+00:00
+                    storage_node: mariadb-proton-rds-mariadb-0
+                    package_name: 1621245880-xxx.zstd
+          description: 获取成功
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 400020000
+                    message: 参数错误
+                    cause: 请求参数不合法
+          description: 参数错误
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 401020000
+                    message: Unauthorized
+                    cause: Failed to verify Token
+          description: oauth鉴权失败
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 500020000
+                    message: 内部错误
+                    cause: xxx Exception...
+          description: 内部错误
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 403020000
+                    message: 禁止执行
+                    cause: 无相关权限
+          description: 逻辑错误，如密码错误
+      security:
+      - OAuth2.0: []
+      summary: 获取备份包列表
+    post:
+      tags:
+      - Backup
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackupInfo'
+              examples:
+                e1:
+                  value:
+                    id: 1621245880-xxx
+                    status: running
+                    create_time: 2019-04-25T02:21:21.328982+00:00
+                    storage_node: mariadb-proton-rds-mariadb-0
+                    package_name: 1621245880-xxx.zstd
+          description: 备份后台进行中
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 401020000
+                    message: Unauthorized
+                    cause: Failed to verify Token
+          description: oauth鉴权失败
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 403020000
+                    message: 禁止执行
+                    cause: 无相关权限
+          description: 逻辑错误，如不允许并发备份
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                内部错误:
+                  value:
+                    code: 500020000
+                    message: 内部错误
+                    cause: xxx Exception...
+          description: 内部异常
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 400020000
+                    message: 参数错误
+                    cause: 请求参数不合法
+          description: 参数错误
+      security:
+      - OAuth2.0: []
+      summary: 创建备份
+    parameters:
+    - examples:
+        root:fakepassword:
+          value: cm9vdDpmYWtlcGFzc3dvcmQ=
+      name: admin-key
+      description: 对管理员用户名+密码字符串(用户名:密码)进行base64编码。 如已配置加密，则对原始密码加密后(用户名:加密密码)再进行base64编码
+      schema:
+        type: string
+      in: header
+      required: true
+  /api/proton-rds-mgmt/v2/users/{username}/ssls:
+    summary: ssl设置
+    description: 用于更新账户的ssl配置。
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SslItem'
+            examples:
+              权限设置:
+                value:
+                  ssl_type: Any
+        required: true
+      tags:
+      - UserAccount
+      parameters:
+      - examples:
+          UserName:
+            value: test1
+        name: username
+        description: 用户名
+        schema:
+          type: string
+        in: path
+        required: true
+      responses:
+        "204":
+          description: 修改成功
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                请求错误:
+                  value:
+                    code: 400020000
+                    message: 参数错误
+                    cause: 请求参数不合法
+          description: 非法请求
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                未授权:
+                  value:
+                    code: 401020000
+                    message: Unauthorized
+                    cause: Failed to verify Token
+          description: 未授权
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                禁止执行:
+                  value:
+                    code: 403020000
+                    message: 禁止执行
+                    cause: 待创建的账户已存在
+          description: 请求禁止执行
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                e1:
+                  value:
+                    code: 404020000
+                    message: 资源不存在
+                    cause: 用户不存在
+          description: 资源不存在
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailRESP'
+              examples:
+                内部错误:
+                  value:
+                    code: 500020000
+                    message: 内部错误
+                    cause: xxx Exception...
+          description: 内部错误
+      security:
+      - OAuth2.0: []
+      summary: ssl设置
+      description: 用于更改账户ssl。ssl_type配置为Any则账户连接时必须携带SSL证书文件；配置为None则不强制SSL连接
+    parameters:
+    - examples:
+        UserName:
+          value: test1
+      name: username
+      description: 用户名，由大写字母、小写字母、数字、下划线（_）组成，以字母开头，以字母或数字结尾，最多32个字符
+      schema:
+        type: string
+      in: path
+      required: true
+    - examples:
+        root:fakepassword:
+          value: cm9vdDpmYWtlcGFzc3dvcmQ=
+      name: admin-key
+      description: 对管理员用户名+密码字符串(用户名:密码)进行base64编码。 如已配置加密，则对原始密码加密后(用户名:加密密码)再进行base64编码
+      schema:
+        type: string
+      in: header
+      required: true
+  /api/proton-rds-mgmt/v2/healthcheck:
+    description: ""
+    post:
+      tags:
+      - cluster
+      responses:
+        "200":
+          description: 数据库健康
+        "500":
+          description: 数据库不健康
+  /api/proton-rds-mgmt/v2/corrupt_table_list:
+    get:
+      tags:
+      - cluster
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+              examples:
+                e1:
+                  value:
+                  - db1.tb1
+                  - db1.tb2
+          description: ok
+      summary: 获取最后一次check table索引损坏的表
+    delete:
+      tags:
+      - cluster
+      responses:
+        "200":
+          description: |
+            ok
+      summary: 重置最后一次check table结果
+components:
+  schemas:
+    FailRESP:
+      description: ""
+      required:
+      - code
+      - message
+      - cause
+      type: object
+      properties:
+        code:
+          format: int64
+          description: 业务错误码
+          type: integer
+        message:
+          description: 业务错误信息
+          type: string
+        cause:
+          description: 导致此错误的原因
+          type: string
+        detail:
+          description: 错误辅助信息
+          type: string
+      example:
+        code: 50
+        message: some text
+        cause: some text
+        detail: some text
+    PrivItem:
+      description: 权限信息
+      required:
+      - db_name
+      - privilege_type
+      type: object
+      properties:
+        privilege_type:
+          description: 权限类型，ReadWrite、ReadOnly、DDLOnly、DMLOnly、All、None
+          enum:
+          - ReadWrite
+          - ReadOnly
+          - DDLOnly
+          - DMLOnly
+          - None
+          - All
+          type: string
+        db_name:
+          description: 需要授权访问的数据库
+          type: string
+      example:
+        dbname: test1
+        privilege_type: ReadOnly
+    DBItem:
+      description: ""
+      required:
+      - charset
+      - collate
+      - db_name
+      type: object
+      properties:
+        charset:
+          description: 数据库字符集编码
+          type: string
+        collate:
+          description: 数据库排序规则
+          type: string
+        db_name:
+          description: 数据库名
+          type: string
+      example:
+        dbname: ecms
+        charset: utf8mb4
+        collate: utf8mb4_general_ci
+    DBInfo:
+      description: ""
+      required:
+      - charset
+      type: object
+      properties:
+        charset:
+          description: "数据库字符集编码,详见https://mariadb.com/kb/en/supported-character-sets-and-collations/"
+          type: string
+        collate:
+          description: 数据库排序规则，详见https://mariadb.com/kb/en/supported-character-sets-and-collations/
+          type: string
+      example:
+        charset: utf8mb4
+        collate: utf8mb4_general_ci
+    UserItem:
+      description: 数据库账户信息
+      required:
+      - privileges
+      - username
+      - ssl_type
+      type: object
+      properties:
+        privileges:
+          description: 权限
+          type: array
+          items:
+            $ref: '#/components/schemas/PrivItem'
+        username:
+          description: 用户名
+          type: string
+        ssl_type:
+          description: user ssl设置
+          enum:
+          - Any
+          - None
+          type: string
+      example:
+        username: test
+        privileges:
+        - dbname: db1
+          privilege_type: ReadWrite
+        - dbname: db2
+          privilege_type: ReadOnly
+    PasswordInfo:
+      description: 密码
+      required:
+      - password
+      type: object
+      properties:
+        password:
+          description: |-
+            密码内容必须包含以下三种及以上字符类型：大写字母、小写字母、数字、特殊符号。长度为8～32位。
+            特殊字符包括：叹号 !、电子邮件符号 @、井号 #、美元符 $、百分号 %、 脱字符 ^、和号 &、星号 *、左括号 (、右括号 )、下划线 _、加号 +、减号 -、等号 =、句号 .
+            密码字符串base64编码。如已配置加密，则对原始密码加密后再进行base64编码
+          type: string
+      example:
+        password: xxxxxx
+    ExtendPrivItem:
+      description: 权限信息
+      required:
+      - db_name
+      - privilege_type
+      type: object
+      properties:
+        privilege_type:
+          description: 权限类型，ReadWrite、ReadOnly、DDLOnly、DMLOnly、All、None
+          enum:
+          - ReadWrite
+          - ReadOnly
+          - DDLOnly
+          - DMLOnly
+          - None
+          - All
+          type: string
+        db_name:
+          description: 需要授权访问的数据库
+          type: string
+      example:
+        dbname: test1
+        privilege_type: ReadOnly
+    BackupInfo:
+      description: 备份包信息
+      required:
+      - package_name
+      - id
+      - create_time
+      - status
+      - storage_node
+      type: object
+      properties:
+        id:
+          description: 包id，唯一标识
+          type: string
+        status:
+          description: 备份包状态
+          enum:
+          - failed
+          - success
+          - running
+          type: string
+        create_time:
+          description: 备份时间
+          type: string
+        storage_node:
+          description: 备份包节点
+          type: string
+        package_name:
+          description: 包名
+          type: string
+    SslItem:
+      description: ""
+      required:
+      - ssl_type
+      type: object
+      properties:
+        ssl_type:
+          description: ""
+          enum:
+          - Any
+          - None
+          type: string
+  securitySchemes:
+    OAuth2.0:
+      flows: {}
+      type: oauth2
+tags:
+- name: DataBase
+  description: 数据库管理
+- name: UserAccount
+  description: 用户账户相关管理
+- name: Backup
+  description: 备份管理
+- name: cluster
+  description: ""

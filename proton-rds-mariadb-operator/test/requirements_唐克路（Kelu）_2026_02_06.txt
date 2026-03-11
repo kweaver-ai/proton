@@ -1,4 +1,0 @@
-allure-pytest
-PyMySQL
-paramiko
-requests

@@ -1,0 +1,138 @@
+def CheckoutCode() {
+    echo "CheckoutCode, BRANCH_TYPE is ${BRANCH_TYPE}"
+    sh "rm -rf ${WORKSPACE}/proton-rds-mariadb-image/*"
+    checkout(
+        [
+        $class : "GitSCM",
+        branches: scm.branches,
+        doGenerateSubmoduleConfigurations: false,
+        extensions: [
+            [
+            $class: "RelativeTargetDirectory",
+            relativeTargetDir: "./proton-rds-mariadb-image"
+            ]
+        ],
+        submoduleCfg: [],
+        userRemoteConfigs: [
+            [
+            credentialsId: "bea73795-697a-49a6-a202-345c1aa588a0",
+            url: "https://devops.aishu.cn/AISHUDevOps/ICT/_git/proton-rds-mariadb-image"
+            ]
+        ]
+        ]
+    )
+}
+
+def BuildImage(ARCH_TYPE) {
+    echo "BuildImage, ARCH_TYPE is ${ARCH_TYPE}"
+    dir("${WORKSPACE}/proton-rds-mariadb-image/src") {
+        def VERSION = sh(script: "cat ../VERSION", returnStdout: true).trim()
+
+        def CURRENT_TAG = "${VERSION}-${BRANCH_NAME}.${BUILD_NUMBER}"
+        def LATEST_TAG = "${VERSION}-${BRANCH_NAME}"
+        if (BRANCH_TYPE == "release") {
+            CURRENT_TAG = "${BRANCH_NAME}-${BUILD_NUMBER}"
+            LATEST_TAG = "${BRANCH_NAME}"
+        }
+
+        def IMAGE_NAME = "acr.aishu.cn/proton/rds-mariadb-${ARCH_TYPE}"
+        def CURRENT_IMAGE = "${IMAGE_NAME}:${CURRENT_TAG}"
+        def LATEST_IMAGE = "${IMAGE_NAME}:${LATEST_TAG}"
+
+        sh "docker build -t ${CURRENT_IMAGE} -f Dockerfile-${ARCH_TYPE} ."
+        sh "docker tag ${CURRENT_IMAGE} ${LATEST_IMAGE}"
+        sh "docker login acr.aishu.cn --username proton --password c8UPPb3dJL7A28C"
+        sh "docker push ${CURRENT_IMAGE}"
+        sh "docker push ${LATEST_IMAGE}"
+        sh "docker rmi ${CURRENT_IMAGE} ${LATEST_IMAGE}"
+    }
+}
+
+def GetBranchType() {
+    BRANCH_TYPE = "develop"
+    if (BRANCH_NAME =~ "^ICT.*") {
+        BRANCH_TYPE = "feature"
+    } else if (BRANCH_NAME =~ "^develop.*") {
+        BRANCH_TYPE = "develop"
+    } else {
+        BRANCH_TYPE = "release"
+    }
+    return BRANCH_TYPE
+}
+
+pipeline {
+    agent none
+
+    environment {
+        BRANCH_TYPE = GetBranchType()
+    }
+
+    stages {
+        stage("build image") {
+            parallel {
+                stage("amd64") {
+                    agent {
+                        node {
+                            label "amd64"
+                        }
+                    }
+                    stages {
+                        stage("Build on amd64") {
+                            steps {
+                                CheckoutCode()
+
+                                BuildImage("amd64")
+                            }
+                        }
+                    }
+                }
+
+                stage("arm64") {
+                    agent {
+                        node {
+                            label "arm64"
+                        }
+                    }
+                    stages {
+                        stage("Build on arm64") {
+                            steps {
+                                CheckoutCode()
+
+                                BuildImage("arm64")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        stage("build Manifest") {
+            agent {
+                node {
+                    label "docker-builder"
+                }
+            }
+            steps {
+                CheckoutCode()
+
+                dir("${WORKSPACE}/proton-rds-mariadb-image") {
+                    script {
+                        def VERSION = sh(script: "cat VERSION", returnStdout: true).trim()
+                        def CURRENT_TAG = "${VERSION}-${BRANCH_NAME}.${BUILD_NUMBER}"
+                        def LATEST_TAG = "${VERSION}-${BRANCH_NAME}"
+                        if (BRANCH_TYPE == "release") {
+                            CURRENT_TAG = "${BRANCH_NAME}-${BUILD_NUMBER}"
+                            LATEST_TAG = "${BRANCH_NAME}"
+                        }
+
+                        def IMAGE_NAME = "acr.aishu.cn/proton/rds-mariadb"
+                        sh "docker login acr.aishu.cn --username proton --password c8UPPb3dJL7A28C"
+                        sh "docker manifest create ${IMAGE_NAME}:${CURRENT_TAG} ${IMAGE_NAME}-amd64:${CURRENT_TAG} ${IMAGE_NAME}-arm64:${CURRENT_TAG}"
+                        sh "docker manifest push -p ${IMAGE_NAME}:${CURRENT_TAG}"
+                        sh "docker manifest create ${IMAGE_NAME}:${LATEST_TAG} ${IMAGE_NAME}-amd64:${LATEST_TAG} ${IMAGE_NAME}-arm64:${LATEST_TAG}"
+                        sh "docker manifest push -p ${IMAGE_NAME}:${LATEST_TAG}"
+                    }
+                }
+            }
+        }
+    }
+}

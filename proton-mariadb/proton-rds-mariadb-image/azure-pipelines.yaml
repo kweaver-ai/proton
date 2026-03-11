@@ -1,0 +1,149 @@
+# Go
+# Build your Go project.
+# Add steps that test, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/go
+
+trigger:
+  - main
+
+resources:
+  containers:
+    - container: builder
+      image: acr.aishu.cn/ict/proton/sophon/build-image:20220617
+
+variables:
+  - name: VERSION
+    value: '2.2.0'
+  - name: CONTROLLER_IMAGE_REGISTRY
+    value: acr.aishu.cn
+  - name: CONTROLLER_IMAGE_REPOSITORY
+    value: proton/rds-mariadb
+  - name: TAG
+
+stages:
+- stage: Build
+  pool: proton-slave-x86_64
+  jobs:
+    - job: ContainerImageAMD64
+      container: builder
+      steps:
+        - bash: |
+            if [[ $(Build.SourceBranchName) =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]];then
+              if [[ $(Build.SourceBranchName) != ${VERSION} ]]; then
+                exit 1
+              fi
+              echo "##vso[task.setvariable variable=TAG]$(Build.SourceBranchName)"
+            else
+              echo "##vso[task.setvariable variable=TAG]${VERSION}-$(Build.SourceBranchName)"
+            fi
+          displayName: Set Tag
+        - task: Docker@2
+          displayName: Build
+          inputs:
+            command: build
+            arguments: --build-arg ARCH=amd64
+            containerRegistry: ProtonACR
+            repository: proton/rds-mariadb-amd64
+            Dockerfile: src/Dockerfile.proton
+            tags: |
+              $(TAG)
+        - task: Docker@2
+          displayName: Push
+          inputs:
+            command: push
+            containerRegistry: ProtonACR
+            repository: proton/rds-mariadb-amd64
+            tags: |
+                $(TAG)
+    - job: ContainerImageARM64
+      pool: proton-slave-arm64
+      container: builder
+      steps:
+        - bash: |
+            if [[ $(Build.SourceBranchName) =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]];then
+              if [[ $(Build.SourceBranchName) != ${VERSION} ]]; then
+                exit 1
+              fi
+              echo "##vso[task.setvariable variable=TAG]$(Build.SourceBranchName)"
+            else
+              echo "##vso[task.setvariable variable=TAG]${VERSION}-$(Build.SourceBranchName)"
+            fi
+          displayName: Set Tag
+        - task: Docker@2
+          displayName: Build
+          inputs:
+            command: build
+            arguments: --build-arg ARCH=arm64
+            containerRegistry: ProtonACR
+            repository: proton/rds-mariadb-arm64
+            Dockerfile: src/Dockerfile.proton
+            tags: |
+              $(TAG)
+        - task: Docker@2
+          displayName: Push
+          inputs:
+            command: push
+            containerRegistry: ProtonACR
+            repository: proton/rds-mariadb-arm64
+            tags: |
+              $(TAG)
+    - job: Manifest
+      container: builder
+      dependsOn:
+        - ContainerImageAMD64
+        - ContainerImageARM64
+      steps:
+        - bash: |
+            if [[ $(Build.SourceBranchName) =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]];then
+              if [[ $(Build.SourceBranchName) != ${VERSION} ]]; then
+                exit 1
+              fi
+              echo "##vso[task.setvariable variable=TAG]$(Build.SourceBranchName)"
+            else
+              echo "##vso[task.setvariable variable=TAG]${VERSION}-$(Build.SourceBranchName)"
+            fi
+          displayName: Set Tag
+        - task: Docker@2
+          displayName: Login acr.aishu.cn
+          inputs:
+            command: login
+            containerRegistry: ProtonACR
+        - bash: |
+            docker manifest create ${CONTROLLER_IMAGE_REGISTRY}/${CONTROLLER_IMAGE_REPOSITORY}:$(TAG) ${CONTROLLER_IMAGE_REGISTRY}/${CONTROLLER_IMAGE_REPOSITORY}-amd64:$(TAG) ${CONTROLLER_IMAGE_REGISTRY}/${CONTROLLER_IMAGE_REPOSITORY}-arm64:$(TAG)
+            docker manifest push -p ${CONTROLLER_IMAGE_REGISTRY}/${CONTROLLER_IMAGE_REPOSITORY}:$(TAG)
+          displayName: Create manifest
+- ${{ if False }}:
+  - stage: CheckPoint
+    jobs:
+      - job: UTQualityCheckPoint
+        pool:
+          name: ASDeployment
+        steps:
+          - task: PublishTestResults@2
+            displayName: Publish UT Report
+            inputs:
+              testRunTitle: UT
+          - task: BuildQualityChecks@8
+            displayName: Quality Gate UT
+            inputs:
+              checkWarnings: true
+              warningFiles: '**/${{variables.UTReportName}}'
+          - task: PublishCodeCoverageResults@1
+            displayName: Publish Coverage Report
+            inputs:
+              codeCoverageTool: 'Cobertura'
+          - task: BuildQualityChecks@8
+            displayName: Quality Gate Coverage
+            inputs:
+              checkCoverage: true
+              coverageThreshold: '79.0'
+          - task: PublishTestResults@2
+            displayName: Publish Lint Report
+            inputs:
+              testRunTitle: Lint
+          - task: BuildQualityChecks@8
+            displayName: Quality Gate Lint
+            inputs:
+              checkWarnings: true
+              warningFiles: '**/${{variables.LintReportName}}'
+
