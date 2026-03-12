@@ -47,7 +47,7 @@ jobs:
         uses: docker/bake-action@v7
         with:
           source: ./proton-mariadb
-          target: rds-etcd
+          target: rds-operator_chart
           push: true
           provenance: false
         env:
@@ -55,3 +55,14 @@ jobs:
           REGISTRY: ${{ vars.OCI_REGISTRY }}
           VERSION: ${{ steps.version.outputs.version }}
           TAG: ${{ steps.version.outputs.tag }}
+        
+      - 
+        name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - 
+        name: Push Helm Chart
+        run: |
+          chart_path="./proton-mariadb/.buildx/charts/rds-mariadb-operator-${{ steps.version.outputs.version }}.tgz"
+          helm push $chart_path oci://${{ vars.OCI_REGISTRY }}/${{ vars.OCI_CHARTREPO }} 
+
