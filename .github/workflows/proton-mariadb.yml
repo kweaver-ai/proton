@@ -5,14 +5,15 @@ on:
 jobs:
   cross:
     runs-on: ubuntu-24.04
+    environment: swr
     steps:
       -
         name: Login to SWR Docker Hub
         uses: docker/login-action@v4
         with:
-          registry: swr.cn-east-3.myhuaweicloud.com
-          username: ${{ vars.SWR_USERNAME }}
-          password: ${{ secrets.SWR_TOKEN }}
+          registry: ${{ vars.OCI_REGISTRY }}
+          username: ${{ vars.OCI_USERNAME }}
+          password: ${{ secrets.OCI_TOKEN }}
 
       -
         name: Checkout
@@ -49,7 +50,7 @@ jobs:
           target: rds-etcd
           push: true
         env:
-          REPOSITORY_BASE: kweaver-ai/proton
-          REGISTRY: swr.cn-east-3.myhuaweicloud.com
+          REPOSITORY_BASE: ${{ vars.OCI_BASEREPO }}
+          REGISTRY: ${{ vars.OCI_REGISTRY }}
           VERSION: ${{ steps.version.outputs.version }}
           TAG: ${{ steps.version.outputs.tag }}
