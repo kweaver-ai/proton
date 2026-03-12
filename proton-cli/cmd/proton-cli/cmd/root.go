@@ -10,6 +10,7 @@ import (
 
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/backup"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/images"
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/offline_package"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/recover"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/core/global"
 )
@@ -39,6 +40,7 @@ func Execute() {
 	rootCmd.AddCommand(images.SetImageCmd())
 	rootCmd.AddCommand(K8SCmd())
 	rootCmd.AddCommand(newAlphaCmd())
+	rootCmd.AddCommand(offline_package.NewCommand())
 
 	err := rootCmd.Execute()
 	if err != nil {

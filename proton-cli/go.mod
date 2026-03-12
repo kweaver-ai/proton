@@ -49,7 +49,7 @@ require (
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
 	golang.org/x/mod v0.17.0
 	golang.org/x/net v0.33.0
-	golang.org/x/sync v0.11.0
+	golang.org/x/sync v0.14.0
 	golang.org/x/sys v0.28.0
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -64,6 +64,7 @@ require (
 	k8s.io/kubectl v0.29.0
 	k8s.io/kubelet v0.25.3
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
+	oras.land/oras-go/v2 v2.6.0
 	sigs.k8s.io/controller-runtime v0.11.0
 	sigs.k8s.io/yaml v1.3.0
 )

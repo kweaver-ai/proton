@@ -6,6 +6,12 @@ GOARCH
 GOPRIVATE
 GOPROXY
 GOSUMDB
+omitzero
+
+# Golang Module
+pflag # github.com/spf13/pflag
+apimachinery # k8s.io/apimachinery/pkg/apis/meta/v1
+oras # oras.land
 
 # tools
 sshpass
@@ -14,15 +20,29 @@ skopeo
 # yum
 basearch
 gpgcheck
+rpms
+
+# containerd
+nerdctl
 
 # Kubernetes
 apiserver
+kubeadm
+kubelet
+kubectl
+
+# Ingress NGINX
+certgen
 
 # Calico Project
+calicoctl
 flexvol
 
 # CoreDNS
 coredns
+
+# Helm
+chartmuseum
 
 # Harbor
 chartrepo # RESTful API
@@ -30,13 +50,17 @@ chartrepo # RESTful API
 # MongoDB
 mongoshake
 
+# OpenSearch
+opensearch
+
 # Nebula
 graphd
 metad
 storaged
 
-# AISHU
-aishu
-
-# proton-opensource
+# kweaver.ai
+ecms
+kweaver
+mgmt
 opensource
+eceph
