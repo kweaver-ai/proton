@@ -1,11 +1,11 @@
 ARG VERSION="0.1.0-alpha"
-ARG REPOSITORY
-ARG REGISTRY
-ARG TAG
+ARG REPOSITORY="proton/component-manage"
+ARG REGISTRY="acr.aishu.cn"
+ARG TAG="unkown"
 
-FROM acr.aishu.cn/ict/builder:tools-yq.latest AS yq
-FROM acr.aishu.cn/public/ubuntu:22.04.20251014 AS runtime
-FROM acr.aishu.cn/ict/builder:tools-helm-3.17 AS helm3
+FROM mikefarah/yq AS yq
+FROM ubuntu:24.04 AS runtime
+FROM alpine/helm:3 AS helm3
 
 # stage1: 修改版本
 FROM yq AS stage1
@@ -26,11 +26,8 @@ FROM runtime AS stage2
 ARG VERSION
 COPY --from=helm3 /usr/bin/helm /usr/bin/helm
 COPY --from=stage1 /work /src
-
 WORKDIR /work
-
-RUN true \
-    && helm package --version ${VERSION} /src/*
+RUN helm package --version ${VERSION} /src/*
 
 
 # stage3: 生成制品

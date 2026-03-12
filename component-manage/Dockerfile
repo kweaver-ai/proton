@@ -1,6 +1,5 @@
-FROM acr.aishu.cn/ict/builder:tools-trivy.latest AS trivy
-FROM acr.aishu.cn/public/ubuntu:22.04.20251014 AS runtime
-FROM acr.aishu.cn/ict/builder:golang-1.25.5n AS goenv
+FROM ubuntu:24.04 AS runtime
+FROM golang:1.25 AS goenv
 
 ENV CGO_ENABLED=0
 
