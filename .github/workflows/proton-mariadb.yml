@@ -10,6 +10,25 @@ jobs:
         name: Checkout
         uses: actions/checkout@v6
 
+      - 
+        name: Get Version
+        id: version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/proton-mariadb/v* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/proton-mariadb/v}
+            TAG=$VERSION
+            echo "🚀 Release version: $VERSION"
+          else
+            SHORT_SHA=${GITHUB_SHA:0:7}
+            VERSION="0.0.0-snapshot+${SHORT_SHA}"
+            TAG="snapshot-${SHORT_SHA}"
+            echo "🔧 Snapshot version: $VERSION"
+          fi
+          
+          # 输出给后续 job 使用
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -24,3 +43,5 @@ jobs:
         env:
           REPOSITORY_BASE: kweaver-ai/proton
           REGISTRY: swr.cn-east-3.myhuaweicloud.com
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
