@@ -216,7 +216,6 @@ func pullOCI(ctx context.Context, output, ref string, s *OCISource) error {
 
 	r := &remote.Repository{
 		Reference: ar,
-		PlainHTTP: true, // TODO: from commandline flag
 	}
 
 	dst, err := oci.New(output)
