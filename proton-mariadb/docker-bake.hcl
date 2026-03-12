@@ -14,25 +14,36 @@ variable "REGISTRY" {
     default = "acr.aishu.cn"
 }
 
+target "_platforms" {
+    platforms = [
+        "linux/amd64",
+        "linux/arm64"
+    ]
+}
+
 target "rds-etcd" {
+    inherits = ["_platforms"]
     context = "./proton-rds-etcd-image"
     tags = [
         "${REGISTRY}/${REPOSITORY_BASE}/rds-etcd:${TAG}"
     ]
 }
 target "rds-exporter" {
+    inherits = ["_platforms"]
     context = "./proton-rds-exporter-image"
     tags = [
         "${REGISTRY}/${REPOSITORY_BASE}/rds-exporter:${TAG}"
     ]
 }
 target "rds-mariadb" {
+    inherits = ["_platforms"]
     context = "./proton-rds-mariadb-image/src"
     tags = [
         "${REGISTRY}/${REPOSITORY_BASE}/rds-mariadb:${TAG}"
     ]
 }
 target "rds-mgmt" {
+    inherits = ["_platforms"]
     context = "./proton-rds-mgmt-image"
     tags = [
         "${REGISTRY}/${REPOSITORY_BASE}/rds-mgmt:${TAG}"
@@ -40,12 +51,14 @@ target "rds-mgmt" {
 }
 
 target "rds-operator_image-controller" {
+    inherits = ["_platforms"]
     context = "./proton-rds-mariadb-operator"
     tags = [
         "${REGISTRY}/${REPOSITORY_BASE}/rds-operator-controller:${TAG}"
     ]
 }
 target "rds-operator_image-proxy" {
+    inherits = ["_platforms"]
     context = "./proton-rds-mariadb-operator"
     target = "kube-rbac-proxy"
     tags = [
