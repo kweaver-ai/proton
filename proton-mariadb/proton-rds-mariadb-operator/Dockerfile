@@ -11,7 +11,7 @@ COPY main.go main.go
 COPY api/ api/
 COPY controllers/ controllers/
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -o manager main.go
 
 
 FROM runtime
