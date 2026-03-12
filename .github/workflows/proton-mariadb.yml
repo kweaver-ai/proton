@@ -1,0 +1,17 @@
+name: proton-mariadb
+on:
+  workflow_dispatch:
+
+jobs:
+  cross:
+    runs-on: ubuntu-24.04
+    steps:
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      -
+        name: Build
+        uses: docker/bake-action@v6
+        with:
+          source: ./proton-mariadb
