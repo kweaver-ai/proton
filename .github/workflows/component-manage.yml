@@ -2,9 +2,70 @@ name: component-manage
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - 'component-manage/v*'
 
 jobs:
   cross:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    environment: swr
     steps:
-      - run: echo Hello World
+      -
+        name: Login to SWR Docker Hub
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ vars.OCI_REGISTRY }}
+          username: ${{ vars.OCI_USERNAME }}
+          password: ${{ secrets.OCI_TOKEN }}
+
+      -
+        name: Checkout
+        uses: actions/checkout@v6
+
+      - 
+        name: Get Version
+        id: version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/component-manage/v* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/component-manage/v}
+            TAG=$VERSION
+            echo "🚀 Release version: $VERSION"
+          else
+            SHORT_SHA=${GITHUB_SHA:0:7}
+            VERSION="0.0.0-snapshot.${SHORT_SHA}"
+            TAG="snapshot.${SHORT_SHA}"
+            echo "🔧 Snapshot version: $VERSION"
+          fi
+          
+          # 输出给后续 job 使用
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      -
+        name: Build
+        uses: docker/bake-action@v7
+        with:
+          source: ./component-manage
+          push: true
+          provenance: false
+        env:
+          REPOSITORY_BASE: ${{ vars.OCI_BASEREPO }}
+          REGISTRY: ${{ vars.OCI_REGISTRY }}
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
+
+      -
+        name: Set up Helm
+        uses: azure/setup-helm@v4  
+
+      - name: Push Helm Chart
+        run: |
+          echo ${{ secrets.GHCR_TOKEN }} | helm registry login ghcr.io -u pat --password-stdin
+          helm push ./component-manage/.buildx/charts/* oci://ghcr.io/kweaver-ai/charts
