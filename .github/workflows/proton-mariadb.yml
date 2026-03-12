@@ -19,3 +19,8 @@ jobs:
         uses: docker/bake-action@v7
         with:
           source: ./proton-mariadb
+          target: rds-etcd
+          push: true
+        env:
+          REPOSITORY_BASE: kweaver-ai/proton
+          REGISTRY: swr.cn-east-3.myhuaweicloud.com
