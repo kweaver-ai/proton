@@ -61,5 +61,5 @@ jobs:
 
       - name: Push Helm Chart
         run: |
-          helm registry login ghcr.io -u kain-jiang --password ${{ secrets.GHCR_TOKEN }}
+          helm registry login ghcr.io -u pat --password ${{ secrets.GHCR_TOKEN }}
           helm push ./proton-mariadb/.buildx/charts/* oci://ghcr.io/kweaver-ai/charts
