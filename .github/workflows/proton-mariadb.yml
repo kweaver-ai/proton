@@ -1,6 +1,10 @@
 name: proton-mariadb
+
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - 'proton-mariadb/v*'
 
 jobs:
   cross:
