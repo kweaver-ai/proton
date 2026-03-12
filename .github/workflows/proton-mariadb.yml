@@ -49,6 +49,7 @@ jobs:
           source: ./proton-mariadb
           target: rds-etcd
           push: true
+          provenance: false
         env:
           REPOSITORY_BASE: ${{ vars.OCI_BASEREPO }}
           REGISTRY: ${{ vars.OCI_REGISTRY }}
