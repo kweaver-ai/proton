@@ -130,7 +130,7 @@ jobs:
         uses: docker/bake-action@v7
         with:
           source: ./component-manage
-          targets: rds-operator_chart
+          targets: cm-chart
           provenance: false
         env:
           REPOSITORY_BASE: ${{ vars.OCI_BASEREPO }}
