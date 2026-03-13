@@ -7,24 +7,17 @@ on:
       - 'proton-mariadb/v*'
 
 jobs:
-  cross:
+  prepare:
     runs-on: ubuntu-24.04
-    environment: swr
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      targets: ${{ steps.targets.outputs.targets }}
     steps:
-      -
-        name: Login to SWR Docker Hub
-        uses: docker/login-action@v4
-        with:
-          registry: ${{ vars.OCI_REGISTRY }}
-          username: ${{ vars.OCI_USERNAME }}
-          password: ${{ secrets.OCI_TOKEN }}
-
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v6
 
-      - 
-        name: Get Version
+      - name: Get Version
         id: version
         run: |
           if [[ $GITHUB_REF == refs/tags/proton-mariadb/v* ]]; then
@@ -37,33 +30,130 @@ jobs:
             TAG="snapshot.${SHORT_SHA}"
             echo "🔧 Snapshot version: $VERSION"
           fi
-          
-          # 输出给后续 job 使用
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-      -
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
+      - name: Resolve bake targets
+        id: targets
+        run: |
+          # 列出所有需要构建多平台镜像的 target（排除 chart 等非镜像 target）
+          TARGETS='["rds-etcd","rds-exporter","rds-mariadb","rds-mgmt","rds-operator_image-controller","rds-operator_image-proxy"]'
+          echo "targets=$TARGETS" >> $GITHUB_OUTPUT
+
+  build:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJson(needs.prepare.outputs.targets) }}
+        include:
+          - runner: ubuntu-24.04
+            platform: linux/amd64
+            platform_suffix: amd64
+          - runner: ubuntu-24.04-arm
+            platform: linux/arm64
+            platform_suffix: arm64
+    runs-on: ${{ matrix.runner }}
+    environment: swr
+    steps:
+      - name: Login to SWR Docker Hub
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ vars.OCI_REGISTRY }}
+          username: ${{ vars.OCI_USERNAME }}
+          password: ${{ secrets.OCI_TOKEN }}
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      -
-        name: Build
+      - name: Build and push (${{ matrix.target }} / ${{ matrix.platform }})
         uses: docker/bake-action@v7
         with:
           source: ./proton-mariadb
+          targets: ${{ matrix.target }}
           push: true
+          provenance: false
+          set: |
+            *.platform=${{ matrix.platform }}
+            *.tags=
+        env:
+          REPOSITORY_BASE: ${{ vars.OCI_BASEREPO }}
+          REGISTRY: ${{ vars.OCI_REGISTRY }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          TAG: ${{ needs.prepare.outputs.tag }}-${{ matrix.platform_suffix }}
+
+  manifest:
+    needs: [prepare, build]
+    runs-on: ubuntu-24.04
+    environment: swr
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: rds-etcd
+            image: rds-etcd
+          - target: rds-exporter
+            image: rds-exporter
+          - target: rds-mariadb
+            image: rds-mariadb
+          - target: rds-mgmt
+            image: rds-mgmt
+          - target: rds-operator_image-controller
+            image: rds-operator-controller
+          - target: rds-operator_image-proxy
+            image: rds-operator-proxy
+    steps:
+      - name: Login to SWR Docker Hub
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ vars.OCI_REGISTRY }}
+          username: ${{ vars.OCI_USERNAME }}
+          password: ${{ secrets.OCI_TOKEN }}
+
+      - name: Create and push manifest (${{ matrix.image }})
+        run: |
+          TAG="${{ needs.prepare.outputs.tag }}"
+          IMAGE="${{ vars.OCI_REGISTRY }}/${{ vars.OCI_BASEREPO }}/${{ matrix.image }}"
+
+          docker manifest create "${IMAGE}:${TAG}" 
+            "${IMAGE}:${TAG}-amd64" 
+            "${IMAGE}:${TAG}-arm64"
+
+          docker manifest annotate "${IMAGE}:${TAG}" 
+            "${IMAGE}:${TAG}-amd64" --os linux --arch amd64
+          docker manifest annotate "${IMAGE}:${TAG}" 
+            "${IMAGE}:${TAG}-arm64" --os linux --arch arm64
+
+          docker manifest push "${IMAGE}:${TAG}"
+
+  chart:
+    needs: [prepare, manifest]
+    runs-on: ubuntu-24.04
+    environment: swr
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build Helm Chart
+        uses: docker/bake-action@v7
+        with:
+          source: ./proton-mariadb
+          targets: rds-operator_chart
           provenance: false
         env:
           REPOSITORY_BASE: ${{ vars.OCI_BASEREPO }}
           REGISTRY: ${{ vars.OCI_REGISTRY }}
-          VERSION: ${{ steps.version.outputs.version }}
-          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          TAG: ${{ needs.prepare.outputs.tag }}
 
-      -
-        name: Set up Helm
-        uses: azure/setup-helm@v4  
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
 
       - name: Push Helm Chart
         run: |
