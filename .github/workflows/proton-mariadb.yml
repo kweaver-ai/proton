@@ -78,7 +78,6 @@ jobs:
           provenance: false
           set: |
             *.platform=${{ matrix.platform }}
-            *.tags=
         env:
           REPOSITORY_BASE: ${{ vars.OCI_BASEREPO }}
           REGISTRY: ${{ vars.OCI_REGISTRY }}
