@@ -77,8 +77,8 @@ func build(ctx context.Context, m *Manifest) error {
 	var (
 		binDir   = filepath.Join(w, "bin")
 		chartDir = filepath.Join(w, "charts")
-		imageDir = filepath.Join(w, "images")
-		rpmDir   = filepath.Join(w, "rpms")
+		imageDir = filepath.Join(w, "service-package", "images")
+		rpmDir   = filepath.Join(w, "repos", "Packages")
 	)
 
 	for _, p := range []string{
