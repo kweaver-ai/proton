@@ -6,3 +6,6 @@ import (
 
 //go:install.sh
 var installBytes []byte
+
+//go:proton-package.repo.tmpl
+var repoTemplateBytes []byte

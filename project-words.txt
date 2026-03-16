@@ -61,6 +61,10 @@ graphd
 metad
 storaged
 
+# RPM
+createrepo # https://github.com/rpm-software-management/createrepo_c/
+repodata
+
 # kweaver.ai
 aishu
 eceph
@@ -68,3 +72,5 @@ ecms
 kweaver
 mgmt
 opensource
+
+tmpl # template

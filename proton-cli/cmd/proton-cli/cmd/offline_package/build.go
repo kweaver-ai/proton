@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"golang.org/x/term"
+	"k8s.io/utils/exec"
 	"oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/content/oci"
 	"oras.land/oras-go/v2/registry"
@@ -78,14 +79,18 @@ func build(ctx context.Context, m *Manifest) error {
 		binDir   = filepath.Join(w, "bin")
 		chartDir = filepath.Join(w, "charts")
 		imageDir = filepath.Join(w, "service-package", "images")
-		rpmDir   = filepath.Join(w, "repos", "Packages")
+
+		repoDir         = filepath.Join(w, "repos")
+		repoPackagesDir = filepath.Join(repoDir, "Packages")
+		repoRepodataDir = filepath.Join(repoDir, "repodata")
 	)
 
 	for _, p := range []string{
 		binDir,
 		chartDir,
 		imageDir,
-		rpmDir,
+		repoPackagesDir,
+		repoRepodataDir,
 	} {
 		if err := os.MkdirAll(p, 0755); err != nil {
 			return err
@@ -120,9 +125,14 @@ func build(ctx context.Context, m *Manifest) error {
 
 	// pull rpms
 	for _, a := range m.Spec.RPMs {
-		if err := pull(ctx, &a, rpmDir); err != nil {
+		if err := pull(ctx, &a, repoPackagesDir); err != nil {
 			return err
 		}
+	}
+
+	// create rpm repository
+	if err := createRPMRepository(ctx, repoDir); err != nil {
+		return err
 	}
 
 	// package tarball
@@ -266,6 +276,37 @@ func pullOCI(ctx context.Context, output, ref string, s *OCISource) error {
 	}
 
 	if _, err := oras.Copy(ctx, r, ar.Reference, dst, ref, oras.DefaultCopyOptions); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createRPMRepository(ctx context.Context, dir string) error {
+	// 1. execute `createrepo` generate repodata
+	e := exec.New()
+	var cmd string
+	for _, c := range []string{
+		"createrepo",
+		"createrepo_c",
+	} {
+		p, err := e.LookPath(c)
+		if errors.Is(err, exec.ErrExecutableNotFound) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		cmd = p
+		break
+	}
+
+	if err := e.CommandContext(ctx, cmd, dir).Run(); err != nil {
+		return err
+	}
+
+	// 2. create yum/rpm repository config template
+	if err := os.WriteFile(filepath.Join(dir, "proton-package.repo.tmpl"), repoTemplateBytes, 0o644); err != nil {
 		return err
 	}
 
