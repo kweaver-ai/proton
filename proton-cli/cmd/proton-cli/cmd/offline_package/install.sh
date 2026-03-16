@@ -1,1 +1,1 @@
-../build/pkg/tarball/install_deps.sh
+../../../../../build/pkg/tarball/install_deps.sh
