@@ -2,6 +2,7 @@ package offline_package
 
 import (
 	"archive/tar"
+	"bufio"
 	"compress/gzip"
 	"context"
 	"errors"
@@ -14,10 +15,12 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"golang.org/x/term"
 	"oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/content/oci"
 	"oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
+	"oras.land/oras-go/v2/registry/remote/auth"
 	"sigs.k8s.io/yaml"
 )
 
@@ -206,6 +209,9 @@ func pullHTTP(ctx context.Context, path string, s *HTTPSource) error {
 	return nil
 }
 
+// container registry credentials cache
+var credentials map[string]auth.Credential
+
 func pullOCI(ctx context.Context, output, ref string, s *OCISource) error {
 	log.Println("pull oci", s.Reference)
 	// get oci artifact reference
@@ -215,6 +221,42 @@ func pullOCI(ctx context.Context, output, ref string, s *OCISource) error {
 	}
 
 	r := &remote.Repository{
+		Client: &auth.Client{
+			Credential: func(ctx context.Context, hostPort string) (auth.Credential, error) {
+				if cache, ok := credentials[hostPort]; ok {
+					return cache, nil
+				}
+
+				scanner := bufio.NewScanner(os.Stdin)
+				fmt.Printf("Login: %s\n", hostPort)
+				fmt.Print("Username: ")
+				scanner.Scan()
+				if err := scanner.Err(); err != nil {
+					return auth.EmptyCredential, fmt.Errorf("couldn't read from standard input: %w", err)
+				}
+				username := scanner.Text()
+
+				fmt.Print("Password: ")
+				password, err := term.ReadPassword(int(os.Stdin.Fd()))
+				if err != nil {
+					return auth.EmptyCredential, fmt.Errorf("couldn't read standard input: %w", err)
+				}
+
+				cache := auth.Credential{
+					Username: username,
+					Password: string(password),
+				}
+
+				if credentials == nil {
+					credentials = make(map[string]auth.Credential)
+				}
+
+				credentials[hostPort] = cache
+
+				return cache, nil
+			},
+			Cache: auth.NewCache(),
+		},
 		Reference: ar,
 	}
 

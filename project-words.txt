@@ -47,6 +47,9 @@ chartmuseum
 # Harbor
 chartrepo # RESTful API
 
+# Kafka exporter, https://github.com/danielqsj/kafka_exporter
+danielqsj
+
 # MongoDB
 mongoshake
 
@@ -59,8 +62,9 @@ metad
 storaged
 
 # kweaver.ai
+aishu
+eceph
 ecms
 kweaver
 mgmt
 opensource
-eceph
