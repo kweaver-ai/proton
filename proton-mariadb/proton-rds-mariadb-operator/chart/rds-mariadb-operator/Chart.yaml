@@ -3,3 +3,5 @@ appVersion: 1.1.0
 description: A Helm chart for Proton RDS MariaDB Operator
 name: rds-mariadb-operator
 version: 1.1.0
+annotations:
+  "org.opencontainers.image.source": "https://github.com/kweaver-ai/proton"

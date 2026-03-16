@@ -21,8 +21,14 @@ target "_platforms" {
     ]
 }
 
+target "_label" {
+    labels = {
+        "org.opencontainers.image.source": "https://github.com/kweaver-ai/proton"
+    }
+}
+
 target "cm-image" {
-    inherits = ["_platforms"]
+    inherits = ["_platforms", "_label"]
     target = "build-result"
     tags = [
         "${REGISTRY}/${REPOSITORY_BASE}/component-manage:${TAG}"
