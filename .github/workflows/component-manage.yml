@@ -32,116 +32,64 @@ jobs:
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=$TAG" >> $GITHUB_OUTPUT
-
-      - name: Resolve bake targets
-        id: targets
-        run: |
-          # 列出所有需要构建多平台镜像的 target（排除 chart 等非镜像 target）
-          TARGETS='["cm-image"]'
-          echo "targets=$TARGETS" >> $GITHUB_OUTPUT
+          echo "repository=${{ github.repository }}/component-manage" >> $GITHUB_OUTPUT
+          echo "chartdir=component-manage/chart/component-manage" >> $GITHUB_OUTPUT
 
   build:
-    needs: prepare
+    depends-on: prepare
     strategy:
-      fail-fast: false
       matrix:
-        target: ${{ fromJson(needs.prepare.outputs.targets) }}
-        platform:
-          - linux/amd64
-          - linux/arm64
+        target:
+        - component-manage
         include:
-          - platform: linux/amd64
-            runner: ubuntu-24.04
-            platform_suffix: amd64
-          - platform: linux/arm64
-            runner: ubuntu-24.04-arm
-            platform_suffix: arm64
-    runs-on: ${{ matrix.runner }}
-    environment: swr
-    steps:
-      - name: Login to SWR Docker Hub
-        uses: docker/login-action@v4
-        with:
-          registry: ${{ vars.OCI_REGISTRY }}
-          username: ${{ vars.OCI_USERNAME }}
-          password: ${{ secrets.OCI_TOKEN }}
+        - target: component-manage
+          workdir: ./component-manage
 
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Build and push (${{ matrix.target }} / ${{ matrix.platform }})
-        uses: docker/bake-action@v7
-        with:
-          source: ./component-manage
-          targets: ${{ matrix.target }}
-          push: true
-          provenance: false
-          set: |
-            *.platform=${{ matrix.platform }}
-        env:
-          REPOSITORY_BASE: ${{ vars.OCI_BASEREPO }}
-          REGISTRY: ${{ vars.OCI_REGISTRY }}
-          VERSION: ${{ needs.prepare.outputs.version }}
-          TAG: ${{ needs.prepare.outputs.tag }}-${{ matrix.platform_suffix }}
-
-  manifest:
-    needs: [prepare, build]
-    runs-on: ubuntu-24.04
-    environment: swr
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target: cm-image
-            image: component-manage
-    steps:
-      - name: Login to SWR Docker Hub
-        uses: docker/login-action@v4
-        with:
-          registry: ${{ vars.OCI_REGISTRY }}
-          username: ${{ vars.OCI_USERNAME }}
-          password: ${{ secrets.OCI_TOKEN }}
-
-      - name: Create and push manifest (${{ matrix.image }})
-        run: |
-          TAG="${{ needs.prepare.outputs.tag }}"
-          IMAGE="${{ vars.OCI_REGISTRY }}/${{ vars.OCI_BASEREPO }}/${{ matrix.image }}"
-
-          docker manifest create "${IMAGE}:${TAG}" "${IMAGE}:${TAG}-amd64" "${IMAGE}:${TAG}-arm64"
-          docker manifest annotate "${IMAGE}:${TAG}" "${IMAGE}:${TAG}-amd64" --os linux --arch amd64
-          docker manifest annotate "${IMAGE}:${TAG}" "${IMAGE}:${TAG}-arm64" --os linux --arch arm64
-          docker manifest push "${IMAGE}:${TAG}"
-
+    uses: docker/github-builder/.github/workflows/build.yml@v1
+    permissions:
+      contents: read # to fetch the repository content
+      # id-token: write # for signing attestation(s) with GitHub OIDC Token
+      packages: write # to push the built image to GitHub Container Registry
+    with:
+      output: image
+      push: true
+      platforms: linux/amd64,linux/arm64
+      meta-images: ghcr.io/${{ needs.prepare.outputs.repository }}
+      context: ${{ matrix.workdir }}
+      set-meta-annotations: true
+      sign: false
+      meta-tags: |
+        type=raw,value=${{ needs.prepare.outputs.tag }}
+    secrets:
+      registry-auths: |
+        - registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+    
   chart:
-    needs: [prepare, manifest]
-    runs-on: ubuntu-24.04
-    environment: swr
+    depends-on: build
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Build Helm Chart
-        uses: docker/bake-action@v7
-        with:
-          source: ./component-manage
-          targets: cm-chart
-          provenance: false
-        env:
-          REPOSITORY_BASE: ${{ vars.OCI_BASEREPO }}
-          REGISTRY: ${{ vars.OCI_REGISTRY }}
-          VERSION: ${{ needs.prepare.outputs.version }}
-          TAG: ${{ needs.prepare.outputs.tag }}
-
-      - name: Set up Helm
-        uses: azure/setup-helm@v4
-
-      - name: Push Helm Chart
+      
+      - name: Modify values.yaml
         run: |
-          echo ${{ secrets.GHCR_TOKEN }} | helm registry login ghcr.io -u pat --password-stdin
-          helm push ./component-manage/.buildx/charts/* oci://ghcr.io/kweaver-ai/charts
+          yq -i '.image.tag="${{ needs.prepare.outputs.tag }}"' ${{ needs.prepare.outputs.chartdir }}/values.yaml
+          yq -i '.image.repository="${{ needs.prepare.outputs.repository }}"' ${{ needs.prepare.outputs.chartdir }}/values.yaml
+          yq -i '.image.registry="ghcr.io"' ${{ needs.prepare.outputs.chartdir }}/values.yaml
+
+      - name: Chart | Push
+        uses: appany/helm-oci-chart-releaser@v0.5.0
+        with:
+          name: component-manage
+          registry: ghcr.io
+          repository: ${{ github.repository_owner }}/charts
+          registry_username: ${{ github.actor }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ needs.prepare.outputs.version }}
+          path: ${{ needs.prepare.outputs.chartdir }}
+
+
