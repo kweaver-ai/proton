@@ -7,7 +7,7 @@ on:
       - 'component-manage/v*'
 
 jobs:
-  prepare:
+  versions:
     runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -32,17 +32,15 @@ jobs:
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=$TAG" >> $GITHUB_OUTPUT
-          echo "repository=${{ github.repository }}/component-manage" >> $GITHUB_OUTPUT
-          echo "chartdir=component-manage/chart/component-manage" >> $GITHUB_OUTPUT
 
   build:
-    needs: prepare
+    needs: versions
     strategy:
       matrix:
-        target:
+        name:
         - component-manage
         include:
-        - target: component-manage
+        - name: component-manage
           workdir: ./component-manage
 
     uses: docker/github-builder/.github/workflows/build.yml@v1
@@ -54,12 +52,13 @@ jobs:
       output: image
       push: true
       platforms: linux/amd64,linux/arm64
-      meta-images: ghcr.io/${{ needs.prepare.outputs.repository }}
+      meta-images: ghcr.io/${{ github.repository }}/${{ matrix.name }}
       context: ${{ matrix.workdir }}
+      target: ${{ matrix.target }}
       set-meta-annotations: true
       sign: false
       meta-tags: |
-        type=raw,value=${{ needs.prepare.outputs.tag }}
+        type=raw,value=${{ needs.versions.outputs.tag }}
     secrets:
       registry-auths: |
         - registry: ghcr.io
@@ -67,7 +66,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
     
   chart:
-    needs: [prepare, build]
+    needs: [versions, build]
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -76,10 +75,12 @@ jobs:
         uses: actions/checkout@v6
       
       - name: Modify values.yaml
+        env:
+          VALUES_FILE: component-manage/chart/component-manage/values.yaml
         run: |
-          yq -i '.image.tag="${{ needs.prepare.outputs.tag }}"' ${{ needs.prepare.outputs.chartdir }}/values.yaml
-          yq -i '.image.repository="${{ needs.prepare.outputs.repository }}"' ${{ needs.prepare.outputs.chartdir }}/values.yaml
-          yq -i '.image.registry="ghcr.io"' ${{ needs.prepare.outputs.chartdir }}/values.yaml
+          yq -i '.image.tag="${{ needs.versions.outputs.tag }}"'                  ${{ env.VALUES_FILE }}
+          yq -i '.image.repository="${{ github.repository }}/${{ matrix.name }}"' ${{ env.VALUES_FILE }}
+          yq -i '.image.registry="ghcr.io"'                                       ${{ env.VALUES_FILE }}
 
       - name: Chart | Push
         uses: appany/helm-oci-chart-releaser@v0.5.0
@@ -89,7 +90,7 @@ jobs:
           repository: ${{ github.repository_owner }}/charts
           registry_username: ${{ github.actor }}
           registry_password: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ needs.prepare.outputs.version }}
-          path: ${{ needs.prepare.outputs.chartdir }}
+          tag: ${{ needs.versions.outputs.version }}
+          path: component-manage/chart/component-manage
 
 
