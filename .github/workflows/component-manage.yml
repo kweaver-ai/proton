@@ -36,7 +36,7 @@ jobs:
           echo "chartdir=component-manage/chart/component-manage" >> $GITHUB_OUTPUT
 
   build:
-    depends-on: prepare
+    needs: prepare
     strategy:
       matrix:
         target:
@@ -67,7 +67,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
     
   chart:
-    depends-on: build
+    needs: [prepare, build]
     runs-on: ubuntu-latest
     permissions:
       packages: write
