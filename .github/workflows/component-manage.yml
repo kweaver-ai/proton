@@ -79,7 +79,7 @@ jobs:
           VALUES_FILE: component-manage/chart/component-manage/values.yaml
         run: |
           yq -i '.image.tag="${{ needs.versions.outputs.tag }}"'                  ${{ env.VALUES_FILE }}
-          yq -i '.image.repository="${{ github.repository }}/${{ matrix.name }}"' ${{ env.VALUES_FILE }}
+          yq -i '.image.repository="${{ github.repository }}/component-manage"'   ${{ env.VALUES_FILE }}
           yq -i '.image.registry="ghcr.io"'                                       ${{ env.VALUES_FILE }}
 
       - name: Chart | Push
