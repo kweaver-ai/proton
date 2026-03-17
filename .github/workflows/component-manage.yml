@@ -49,18 +49,19 @@ jobs:
       # id-token: write # for signing attestation(s) with GitHub OIDC Token
       packages: write # to push the built image to GitHub Container Registry
     with:
+      context: ${{ matrix.workdir }}
+      target: ${{ matrix.target }}
       output: image
       push: true
       platforms: linux/amd64,linux/arm64
-      meta-images: ghcr.io/${{ github.repository }}/${{ matrix.name }}
-      context: ${{ matrix.workdir }}
-      target: ${{ matrix.target }}
       set-meta-annotations: true
       cache: true
       cache-mode: max
       sign: false
       meta-tags: |
         type=raw,value=${{ needs.versions.outputs.tag }}
+      meta-images: |
+        ghcr.io/${{ github.repository }}/${{ matrix.name }}
     secrets:
       registry-auths: |
         - registry: ghcr.io
