@@ -206,6 +206,9 @@ export class ServiceFramework extends ServiceFrameworkBase {
           <Form
             ref={this.formRef}
             schema={SCHEMA as RJSFSchema}
+            experimental_defaultFormStateBehavior={{
+              emptyObjectFields: "skipEmptyDefaults",
+            }}
             templates={{ BaseInputTemplate: MyBaseInputTemplate }}
             widgets={{ CheckboxWidget: BooleanSelectWidget }}
             uiSchema={uiSchema}
