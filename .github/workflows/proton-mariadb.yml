@@ -39,12 +39,25 @@ jobs:
         name:
         - rds-operator-controller
         - rds-operator-proxy
+        - rds-etcd
+        - rds-mariadb
+        - rds-exporter
+        - rds-mgmt
         include:
         - name: rds-operator-controller
           workdir: ./proton-mariadb/proton-rds-mariadb-operator
         - name: rds-operator-proxy
           workdir: ./proton-mariadb/proton-rds-mariadb-operator
           target: kube-rbac-proxy
+
+        - name: rds-etcd
+          workdir: ./proton-mariadb/proton-rds-etcd-image
+        - name: rds-mariadb
+          workdir: ./proton-mariadb/proton-rds-mariadb-image/src
+        - name: rds-exporter
+          workdir: ./proton-mariadb/proton-rds-exporter-image
+        - name: rds-mgmt
+          workdir: ./proton-mariadb/proton-rds-mgmt-image
 
     uses: docker/github-builder/.github/workflows/build.yml@v1
     permissions:
