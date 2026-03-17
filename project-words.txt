@@ -61,6 +61,11 @@ graphd
 metad
 storaged
 
+# nFPM https://nfpm.goreleaser.com/
+preremove
+postremove
+nfpm
+
 # RPM
 createrepo # https://github.com/rpm-software-management/createrepo_c/
 repodata

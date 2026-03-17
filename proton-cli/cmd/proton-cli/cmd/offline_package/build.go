@@ -97,8 +97,8 @@ func build(ctx context.Context, m *Manifest) error {
 		}
 	}
 
-	// create entrypoint script
-	if err := os.WriteFile(filepath.Join(w, "install.sh"), installBytes, 0755); err != nil {
+	// create manifest file
+	if err := createManifestFile(filepath.Join(w, "manifest.yaml"), m); err != nil {
 		return err
 	}
 
@@ -130,13 +130,18 @@ func build(ctx context.Context, m *Manifest) error {
 		}
 	}
 
+	// create install script
+	if err := os.WriteFile(filepath.Join(w, "install.sh"), scriptInstallBytes, 0o644); err != nil {
+		return err
+	}
+
 	// create rpm repository
 	if err := createRPMRepository(ctx, repoDir); err != nil {
 		return err
 	}
 
 	// package tarball
-	f, err := os.Create("proton-cli-offline-package.tar")
+	f, err := os.Create("proton-offline-package.tar")
 	if err != nil {
 		return err
 	}
@@ -150,6 +155,14 @@ func build(ctx context.Context, m *Manifest) error {
 	}
 
 	return nil
+}
+
+func createManifestFile(p string, m *Manifest) error {
+	y, err := yaml.Marshal(m)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(p, y, 0o644)
 }
 
 func pull(ctx context.Context, a *Artifact, output string) error {
@@ -177,9 +190,11 @@ func pullHTTP(ctx context.Context, path string, s *HTTPSource) error {
 	defer resp.Body.Close()
 
 	var r io.Reader
+	var mode os.FileMode
 	switch s.Format {
 	case "":
 		r = resp.Body
+		mode = 0o755
 	case "tar+gzip":
 		gr, err := gzip.NewReader(resp.Body)
 		if err != nil {
@@ -200,6 +215,7 @@ func pullHTTP(ctx context.Context, path string, s *HTTPSource) error {
 				continue
 			}
 			r = tr
+			mode = h.FileInfo().Mode()
 			break
 		}
 	default:
@@ -213,6 +229,10 @@ func pullHTTP(ctx context.Context, path string, s *HTTPSource) error {
 	defer f.Close()
 
 	if _, err := io.Copy(f, r); err != nil {
+		return err
+	}
+
+	if err := os.Chmod(path, mode); err != nil {
 		return err
 	}
 
@@ -283,7 +303,6 @@ func pullOCI(ctx context.Context, output, ref string, s *OCISource) error {
 }
 
 func createRPMRepository(ctx context.Context, dir string) error {
-	// 1. execute `createrepo` generate repodata
 	e := exec.New()
 	var cmd string
 	for _, c := range []string{
@@ -305,8 +324,8 @@ func createRPMRepository(ctx context.Context, dir string) error {
 		return err
 	}
 
-	// 2. create yum/rpm repository config template
-	if err := os.WriteFile(filepath.Join(dir, "proton-package.repo.tmpl"), repoTemplateBytes, 0o644); err != nil {
+	// create repository config template
+	if err := os.WriteFile(filepath.Join(dir, "proton.repo.tmpl"), templateProtonRepoBytes, 0o644); err != nil {
 		return err
 	}
 
