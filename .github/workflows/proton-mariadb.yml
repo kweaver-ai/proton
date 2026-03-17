@@ -84,14 +84,11 @@ jobs:
         env:
           VALUES_FILE: proton-mariadb/proton-rds-mariadb-operator/chart/rds-mariadb-operator/values.yaml
         run: |
-          yq -i '.image.tag="${{ needs.versions.outputs.tag }}"' \
-            ${{ env.VALUES_FILE }}
-          yq -i '.image.proxy.repository="${{ github.repository }}/rds-operator-proxy"' \
-            ${{ env.VALUES_FILE }}
-          yq -i '.image.controller.repository="${{ github.repository }}/rds-operator-controller"' \
-            ${{ env.VALUES_FILE }}
-          yq -i '.image.registry="ghcr.io"' \
-            ${{ env.VALUES_FILE }}
+          yq -i '.image.proxy.tag="${{ needs.versions.outputs.tag }}"' ${{ env.VALUES_FILE }}
+          yq -i '.image.controller.tag="${{ needs.versions.outputs.tag }}"' ${{ env.VALUES_FILE }}
+          yq -i '.image.proxy.repository="${{ github.repository }}/rds-operator-proxy"' ${{ env.VALUES_FILE }}
+          yq -i '.image.controller.repository="${{ github.repository }}/rds-operator-controller"' ${{ env.VALUES_FILE }}
+          yq -i '.image.registry="ghcr.io"' ${{ env.VALUES_FILE }}
 
       - name: Chart | Push
         uses: appany/helm-oci-chart-releaser@v0.5.0
