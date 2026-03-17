@@ -56,6 +56,8 @@ jobs:
       context: ${{ matrix.workdir }}
       target: ${{ matrix.target }}
       set-meta-annotations: true
+      cache: true
+      cache-mode: max
       sign: false
       meta-tags: |
         type=raw,value=${{ needs.versions.outputs.tag }}
