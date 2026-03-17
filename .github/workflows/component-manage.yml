@@ -1,4 +1,4 @@
-name: component-manage
+name: "Build: component-manage"
 
 on:
   workflow_dispatch:

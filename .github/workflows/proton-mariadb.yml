@@ -1,4 +1,4 @@
-name: proton-mariadb
+name: "Build: proton-mariadb"
 
 on:
   workflow_dispatch:
