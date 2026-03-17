@@ -1,0 +1,179 @@
+---
+apiVersion: proton.kweaver.ai/v1alpha1
+kind: Manifest
+metadata:
+  name: example-manifest
+
+spec:
+  architecture: amd64
+
+  binaries:
+    - name: calicoctl
+      http:
+        url: https://github.com/projectcalico/calico/releases/download/v3.31.4/calicoctl-linux-amd64
+    - name: helm
+      http:
+        url: https://get.helm.sh/helm-v3.20.0-linux-amd64.tar.gz
+        format: tar+gzip
+        path: linux-amd64/helm
+    - name: proton-cli
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/proton-cli-3.8.0-beta.45%2Bebf09c2.20260206.4/proton-cli-3.8.0-beta.45+ebf09c2.20260206.4-linux-amd64.tar.gz
+        format: tar+gzip
+        path: bin/proton-cli
+    - name: nerdctl
+      http:
+        url: https://github.com/containerd/nerdctl/releases/download/v2.2.1/nerdctl-2.2.1-linux-amd64.tar.gz
+        format: tar+gzip
+        path: nerdctl
+
+  charts:
+    - name: component-manage-0.5.1.tgz
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/component-manage-0.5.1/component-manage-0.5.1.tgz
+    - name: ingress-nginx-4.15.0.tgz
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/ingress-nginx-4.15.0/ingress-nginx-4.15.0.tgz
+    - name: nvidia-device-plugin-1.0.0-0.14.5.tgz
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/nvidia-device-plugin-1.0.0-0.14.5/nvidia-device-plugin-1.0.0-0.14.5.tgz
+    - name: proton-grafana-1.0.6.tgz
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/proton-grafana-1.0.6/proton-grafana-1.0.6.tgz
+    - name: proton-kafka-5.6.0.tgz
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/proton-kafka-5.6.0/proton-kafka-5.6.0.tgz
+    - name: proton-opensearch-1.8.8.tgz
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/proton-opensearch-1.8.8/proton-opensearch-1.8.8.tgz
+    - name: proton-prometheus-1.0.1.tgz
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/proton-prometheus-1.0.1/proton-prometheus-1.0.1.tgz
+    - name: proton-redis-1.11.2.tgz
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/proton-redis-1.11.2/proton-redis-1.11.2.tgz
+    - name: proton-zookeeper-5.6.0.tgz
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/proton-zookeeper-5.6.0/proton-zookeeper-5.6.0.tgz
+    - name: rds-mariadb-operator-1.4.1.tgz
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/rds-mariadb-operator-1.4.1/rds-mariadb-operator-1.4.1.tgz
+
+
+  images:
+    - name: busybox:1.36.1
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/busybox:1.36.1
+    - name: calico-cni:v3.31.4
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/calico-cni:v3.31.4
+    - name: calico-kube-controllers:v3.31.4
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/calico-kube-controllers:v3.31.4
+    - name: calico-node:v3.31.4
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/calico-node:v3.31.4
+    - name: component-manage:git.07cd3ffd
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/component-manage:git.07cd3ffd
+    - name: coredns:v1.13.1
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/coredns:v1.13.1
+    - name: etcd:3.6.6-0
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/etcd:3.6.6-0
+    - name: etcd:v3.3.19
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/etcd:v3.3.19
+    - name: ingress-nginx-controller:v1.15.0
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/ingress-nginx-controller:v1.15.0
+    - name: kafka-exporter:v1.6.0
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/kafka-exporter:v1.6.0
+    - name: kube-apiserver:v1.35.2
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/kube-apiserver:v1.35.2
+    - name: kube-controller-manager:v1.35.2
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/kube-controller-manager:v1.35.2
+    - name: kube-rbac-proxy:v0.11.0
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/kube-rbac-proxy:v0.11.0
+    - name: kube-scheduler:v1.35.2
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/kube-scheduler:v1.35.2
+    - name: kube-webhook-certgen:v1.6.8
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/kube-webhook-certgen:v1.6.8
+    - name: pause:3.10.1
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/pause:3.10.1
+    - name: prometheus-config-reloader:v0.66.0
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/prometheus-config-reloader:v0.66.0
+    - name: prometheus:v2.37.8
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/prometheus:v2.37.8
+    - name: proton-grafana:1.0.6-20250707.2.90ad92
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/proton-grafana:1.0.6-20250707.2.90ad92
+    - name: proton-kafka:5.6.0-20251110.2.f1ef4340
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/proton-kafka:5.6.0-20251110.2.f1ef4340
+    - name: proton-opensearch-exporter:1.8.8
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/proton-opensearch-exporter:1.8.8
+    - name: proton-opensearch:1.8.8
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/proton-opensearch:1.8.8
+    - name: proton-redis:1.11.2-20251029.2.169ac3c0
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/proton-redis:1.11.2-20251029.2.169ac3c0
+    - name: proton-zookeeper-exporter:5.6.0-20250625.2.138fb9
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/proton-zookeeper-exporter:5.6.0-20250625.2.138fb9
+    - name: proton-zookeeper:5.6.0-20250625.2.138fb9
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/proton-zookeeper:5.6.0-20250625.2.138fb9
+    - name: rds-exporter:2.1.0
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/rds-exporter:2.1.0
+    - name: rds-mariadb-controller:1.4.1
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/rds-mariadb-controller:1.4.1
+    - name: rds-mariadb:2.2.0
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/rds-mariadb:2.2.0
+    - name: rds-mgmt:2.3.0
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/rds-mgmt:2.3.0
+    - name: redis_exporter:v1.77.0
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/redis_exporter:v1.77.0
+
+  rpms:
+    - name: containerd-1.7.25-1.20250819.2.proton.x86_64.rpm
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/containerd-1.7.25/containerd-1.7.25.x86_64.rpm
+    - name: cri-tools-1.35.0-150500.1.1.x86_64.rpm
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/cri-tools-1.35.0/cri-tools-1.35.0-150500.1.1.x86_64.rpm
+    - name: ecms-1.1.8.x86_64.rpm
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/ecms%2F1.1.8/ecms-1.1.8-121.x86_64.rpm
+    - name: kubeadm-1.35.2-150500.1.1.x86_64.rpm
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/kubernetes-1.35.2/kubeadm-1.35.2-1.proton.x86_64.rpm
+    - name: kubectl-1.35.2-150500.1.1.x86_64.rpm
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/kubernetes-1.35.2/kubectl-1.35.2-1.proton.x86_64.rpm
+    - name: kubelet-1.35.2-150500.1.1.x86_64.rpm
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/kubernetes-1.35.2/kubelet-1.35.2-1.proton.x86_64.rpm
+    - name: kubernetes-cni-1.8.0-150500.1.1.x86_64.rpm
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/kubernetes-cni-1.8.0/kubernetes-cni-1.8.0-150500.1.1.x86_64.rpm
+    - name: runc-1.3.0-1.20250815.13.proton.x86_64.rpm
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/runc-1.3.0/runc-1.3.0-1.20250815.13.proton.x86_64.rpm
