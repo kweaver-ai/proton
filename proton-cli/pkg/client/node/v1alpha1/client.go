@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"bytes"
+	"fmt"
 	"net"
 
 	eceph_agent_config "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/eceph/agent_config/v1alpha1"
@@ -35,7 +36,7 @@ type Client struct {
 
 // NewSSHClient 返回 SSHClient
 func New(node *configuration.Node) (*Client, error) {
-	restConfig := &rest.Config{Host: net.JoinHostPort(node.IP(), "9547")}
+	restConfig := &rest.Config{Host: net.JoinHostPort(node.IP(), fmt.Sprintf("%d", slb_v1.DefaultPort))}
 
 	ecms := ecms.NewForHost(node.IP())
 

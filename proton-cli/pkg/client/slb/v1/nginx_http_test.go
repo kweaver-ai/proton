@@ -13,7 +13,7 @@ func TestCreateNginxHTTP(t *testing.T) {
 	t.Skip("unimplemented")
 
 	global.LoggerLevel = "debug"
-	c, err := NewForConfig(&rest.Config{Host: "10.4.15.71:9547"})
+	c, err := NewForConfig(&rest.Config{Host: "10.4.15.71:9202"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +51,7 @@ func TestGetNginxHTTP(t *testing.T) {
 
 	global.LoggerLevel = "debug"
 
-	c, err := NewForConfig(&rest.Config{Host: "10.4.15.105:9547"})
+	c, err := NewForConfig(&rest.Config{Host: "10.4.15.105:9202"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestListNginxHTTPs(t *testing.T) {
 
 	global.LoggerLevel = "debug"
 
-	c, err := NewForConfig(&rest.Config{Host: "10.4.15.71:9547"})
+	c, err := NewForConfig(&rest.Config{Host: "10.4.15.71:9202"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +92,7 @@ func TestUpdateNginxHTTP(t *testing.T) {
 
 	global.LoggerLevel = "debug"
 
-	c, err := NewForConfig(&rest.Config{Host: "10.4.15.71:9547"})
+	c, err := NewForConfig(&rest.Config{Host: "10.4.15.71:9202"})
 	if err != nil {
 		t.Fatal(err)
 	}

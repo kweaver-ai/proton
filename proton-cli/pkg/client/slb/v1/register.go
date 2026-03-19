@@ -13,4 +13,4 @@ const (
 var SchemeGroupVersion = rest.GroupVersion{Group: GroupName, Version: GroupVersion}
 
 // DefaultPort is the default port
-const DefaultPort = 9547
+const DefaultPort = 9202

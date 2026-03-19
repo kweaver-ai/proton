@@ -18,7 +18,7 @@ func TestList(t *testing.T) {
 
 	global.LoggerLevel = "debug"
 
-	cfg := &rest.Config{Host: "http://10.4.15.105:9547"}
+	cfg := &rest.Config{Host: "http://10.4.15.105:9202"}
 	c, err := NewForConfig(cfg)
 	if err != nil {
 		t.Fatal(err)
@@ -38,7 +38,7 @@ func TestGet(t *testing.T) {
 
 	global.LoggerLevel = "debug"
 
-	cfg := &rest.Config{Host: "http://10.4.15.105:9547"}
+	cfg := &rest.Config{Host: "http://10.4.15.105:9202"}
 	c, err := NewForConfig(cfg)
 	if err != nil {
 		t.Fatal(err)
@@ -59,7 +59,7 @@ func TestCreateKeepalivedHA(t *testing.T) {
 
 	global.LoggerLevel = "debug"
 
-	c, err := NewForConfig(&rest.Config{Host: "10.4.15.71:9547"})
+	c, err := NewForConfig(&rest.Config{Host: "10.4.15.71:9202"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,7 +90,7 @@ func TestUpdateKeepalivedHA(t *testing.T) {
 
 	global.LoggerLevel = "debug"
 
-	c, err := NewForConfig(&rest.Config{Host: "10.4.15.71:9547"})
+	c, err := NewForConfig(&rest.Config{Host: "10.4.15.71:9202"})
 	if err != nil {
 		t.Fatal(err)
 	}

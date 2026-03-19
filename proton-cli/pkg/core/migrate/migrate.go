@@ -118,7 +118,7 @@ func migrateProtonCLIConfig4ECeph(protonDeployConf c.ProtonDeployClusterConfig, 
 }
 
 func EnforceDefaultPDConfig4ECeph(protonDeployConf c.ProtonDeployClusterConfig) error {
-	// validate that slb>slb_listen either does not exist or is 9547
+	// validate that slb>slb_listen either does not exist or matches the SLB client default port
 	if _, ok := protonDeployConf[c.FnProtonDeploySLB]; ok {
 		actualSLBListen, ok := MII2MSI(protonDeployConf[c.FnProtonDeploySLB])[c.FnProtonDeploySLBListenPort]
 		if ok && fmt.Sprintf("%v", actualSLBListen) != fmt.Sprintf("%v", v1.DefaultPort) {

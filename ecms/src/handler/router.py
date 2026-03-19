@@ -17,6 +17,10 @@ from src.handler.ecms_handler import NetArpHandler, NetInfNameHandler, NetIpsHan
 from src.handler.v1alpha1 import FileHandler as V1Alpha1FileHandler
 from src.handler.v1alpha1 import FileMovementHandler as V1Alpha1FileMovementHandler
 from src.handler.v1alpha1 import ExecutionHandler as V1Alpha1ExecutionHandler
+from src.handler.nginx_handler import NginxInstanceHandler, NginxHttpHandler, NginxHttpServerHandler
+from src.handler.keepalived_handler_v2 import KeepalivedInstanceHandler, KeepalivedHAHandlerV2, \
+    KeepalivedHAInstanceHandler
+from src.handler.haproxy_handler import HAProxyConfigHandler
 
 ECMS_ROUTER = [
     # NetAgent
@@ -47,6 +51,14 @@ ECMS_ROUTER = [
     (r"/api/ecms/v1/chrony/diff", ChronyDiffHandler),
     (r"/api/ecms/v1/chrony/server", ChronyServerHandler),
     (r"/api/ecms/v1/chrony/chrony", ChronyHandler),
+    # Proton SLB compatibility
+    (r"/api/slb/v1/nginx/nginx", NginxInstanceHandler),
+    (r"/api/slb/v1/nginx/http", NginxHttpHandler),
+    (r"/api/slb/v1/nginx/http/(.+)", NginxHttpServerHandler),
+    (r"/api/slb/v2/keepalived/keepalived", KeepalivedInstanceHandler),
+    (r"/api/slb/v2/keepalived/ha", KeepalivedHAHandlerV2),
+    (r"/api/slb/v2/keepalived/ha/(.+)", KeepalivedHAInstanceHandler),
+    (r"/api/slb/v1/haproxy/haproxy", HAProxyConfigHandler),
     # Execution
     (r"/api/ecms/v1alpha1/exec", V1Alpha1ExecutionHandler),
     # Files

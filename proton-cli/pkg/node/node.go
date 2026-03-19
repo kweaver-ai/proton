@@ -446,12 +446,13 @@ func (n *Node) setNode(conf client.RemoteClientConf) error {
 	headers := map[string]string{
 		"Content-Type": "application/json",
 	}
+	slbHost := net.JoinHostPort(conf.Host, fmt.Sprintf("%d", slb_v2.DefaultPort))
 	n.Logger.Debug("create haproxy config")
-	if s, b, err := n.HttpClient.Post(fmt.Sprintf("http://%s:9547/api/slb/v1/haproxy/haproxy", conf.Host), headers, haConf); err != nil {
+	if s, b, err := n.HttpClient.Post(fmt.Sprintf("http://%s/api/slb/v1/haproxy/haproxy", slbHost), headers, haConf); err != nil {
 		return fmt.Errorf("unable to create haproxy config, error: %w", err)
 	} else if s == http.StatusConflict {
 		n.Logger.Debug("update haproxy config due to already existing")
-		if s, b, err := n.HttpClient.Put(fmt.Sprintf("http://%s:9547/api/slb/v1/haproxy/haproxy", conf.Host), headers, haConf); err != nil {
+		if s, b, err := n.HttpClient.Put(fmt.Sprintf("http://%s/api/slb/v1/haproxy/haproxy", slbHost), headers, haConf); err != nil {
 			return fmt.Errorf("unable to update haproxy config: %w", err)
 		} else if s != http.StatusNoContent {
 			return fmt.Errorf("unable to update haproxy config, http status code: %d, response body: %v", s, b)
@@ -462,7 +463,7 @@ func (n *Node) setNode(conf client.RemoteClientConf) error {
 
 	// 为未开启安全检查的SLB HA配置开启安全检查
 	// 先获取，然后检查HA实例是否为空，有内容就检查是否开启安全检查，否则跳过
-	restConfig := &rest.Config{Host: net.JoinHostPort(conf.Host, "9547")}
+	restConfig := &rest.Config{Host: slbHost}
 	slbV2, err := slb_v2.NewForConfig(restConfig)
 	if err != nil {
 		n.Logger.Warning(fmt.Sprintf("Cannot create Proton SLB Client:%s", conf.Host), err)
