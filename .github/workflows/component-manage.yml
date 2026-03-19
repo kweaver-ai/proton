@@ -96,4 +96,10 @@ jobs:
           tag: ${{ needs.versions.outputs.version }}
           path: component-manage/chart/component-manage
 
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          files: ${{ runner.temp }}/component-manage-${{ needs.versions.outputs.version }}.tgz"
+          prerelease: true
 
