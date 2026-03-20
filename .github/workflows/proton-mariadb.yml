@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - 'proton-mariadb/v*'
+      - 'proton-mariadb-*'
 
 jobs:
   versions:
@@ -19,8 +19,8 @@ jobs:
       - name: Get Version
         id: version
         run: |
-          if [[ $GITHUB_REF == refs/tags/proton-mariadb/v* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/proton-mariadb/v}
+          if [[ $GITHUB_REF == refs/tags/proton-mariadb-* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/proton-mariadb-}
             TAG=$VERSION
             echo "🚀 Release version: $VERSION"
           else
@@ -89,6 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       packages: write
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -114,4 +115,9 @@ jobs:
           tag: ${{ needs.versions.outputs.version }}
           path: proton-mariadb/proton-rds-mariadb-operator/chart/rds-mariadb-operator
 
-
+      - name: Pre Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          files: ${{ runner.temp }}/rds-mariadb-operator-${{ needs.versions.outputs.version }}.tgz
+          prerelease: true
