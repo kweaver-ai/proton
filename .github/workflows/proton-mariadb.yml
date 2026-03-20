@@ -123,7 +123,7 @@ jobs:
           prerelease: true
           body: |
             Extra Image List:
-            - ghcr.io/${{ github.repository }}/rds-etcd:${{ needs.versions.outputs.tag }}
-            - ghcr.io/${{ github.repository }}/rds-mariadb:${{ needs.versions.outputs.tag }}
-            - ghcr.io/${{ github.repository }}/rds-exporter:${{ needs.versions.outputs.tag }}
-            - ghcr.io/${{ github.repository }}/rds-mgmt:${{ needs.versions.outputs.tag }}
+            - `ghcr.io/${{ github.repository }}/rds-etcd:${{ needs.versions.outputs.tag }}`
+            - `ghcr.io/${{ github.repository }}/rds-mariadb:${{ needs.versions.outputs.tag }}`
+            - `ghcr.io/${{ github.repository }}/rds-exporter:${{ needs.versions.outputs.tag }}`
+            - `ghcr.io/${{ github.repository }}/rds-mgmt:${{ needs.versions.outputs.tag }}`
